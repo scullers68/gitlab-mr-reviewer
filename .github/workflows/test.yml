@@ -15,7 +15,9 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y bats jq
+          sudo apt-get install -y jq
+          git clone --depth 1 --branch v1.13.0 https://github.com/bats-core/bats-core.git /tmp/bats-core
+          sudo /tmp/bats-core/install.sh /usr/local
 
       - name: Run bats tests
         run: bats tests/
