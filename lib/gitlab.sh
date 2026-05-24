@@ -25,9 +25,9 @@ gitlab::list_open_mrs() {
   glab mr list \
     --repo "$project" \
     --target-branch "$target_branch" \
-    --state opened \
+    --not-draft \
     --output json \
-    | jq -r '.[] | select(.draft == false and .work_in_progress == false) | .iid'
+    | jq -r '.[].iid'
 }
 
 # Post a comment on an MR. Reads body from stdin.
