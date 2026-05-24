@@ -367,3 +367,39 @@ EOF
   ! grep -q -- '--output-format json' "$CALL_LOG"
   grep -q  -- '--output-format text' "$CALL_LOG"
 }
+
+@test "renders prompt correctly when diff contains & and backslash" {
+  setup_jq
+  local fx="$TMPDIR_T/fx"; mkdir -p "$fx"
+  cat >"$fx/view.json" <<'JSON'
+{"state":"opened","draft":false,"has_conflicts":false,"target_branch":"main","title":"A & B","description":"use \\n","head_pipeline":{"status":"success"}}
+JSON
+  # Diff that contains & and backslash — both are awk gsub special chars.
+  cat >"$fx/diff.patch" <<'PATCH'
+-old && stuff
++new \\ value & replacement
+PATCH
+  echo "[]" >"$fx/list.json"
+  make_glab_stub "$fx"
+
+  # Record the prompt that was actually sent to claude.
+  cat >"$FAKE_BIN/claude" <<'EOF'
+#!/usr/bin/env bash
+echo "claude $*" >>"$CALL_LOG"
+# Save stdin (the rendered prompt) for inspection.
+cat >"$TMPDIR_T/rendered_prompt"
+cat <<VERDICT
+{"approved":true,"blocking":[],"suggestions":[],"summary":"ok"}
+VERDICT
+EOF
+  chmod +x "$FAKE_BIN/claude"
+
+  run "$PROJECT_ROOT/bin/review-mr.sh" --dry-run acme/widgets 7
+  [ "$status" -eq 0 ]
+
+  # The rendered prompt must contain the literal strings, not awk-mangled expansions.
+  grep -q 'A & B'              "$TMPDIR_T/rendered_prompt"
+  grep -q 'use \\n'            "$TMPDIR_T/rendered_prompt"
+  grep -q '&& stuff'           "$TMPDIR_T/rendered_prompt"
+  grep -q '\\ value & replacement' "$TMPDIR_T/rendered_prompt"
+}
