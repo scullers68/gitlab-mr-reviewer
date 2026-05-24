@@ -60,6 +60,10 @@ set -a; source .env; set +a
 
 # Dry run — review and print verdict, but post no comments and do not merge
 ./bin/review-mr.sh --dry-run acme/widgets 42
+
+# If REVIEW_PROJECT=acme/widgets is set in .env, the project can be omitted
+./bin/review-mr.sh 42
+./bin/review-mr.sh --all
 ```
 
 From inside Claude Code, after installing the skill:
@@ -77,6 +81,7 @@ All configuration is via environment variables (see `.env.example`):
 |---|---|---|
 | `GITLAB_TOKEN` | _required_ | Personal Access Token with `api` scope |
 | `GITLAB_HOST` | `gitlab.com` | Host for self-hosted instances |
+| `REVIEW_PROJECT` | _unset_ | Default project path (e.g. `mygroup/myrepo`); omit `<project>` from CLI when set |
 | `REVIEW_TARGET_BRANCH` | `main` | Only MRs targeting this branch are eligible |
 | `CLAUDE_BIN` | `claude` | Override the Claude CLI binary path |
 | `REVIEW_DEBUG` | _unset_ | Set to `1` for verbose debug logging to stderr |

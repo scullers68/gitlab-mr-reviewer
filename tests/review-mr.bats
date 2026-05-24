@@ -109,24 +109,64 @@ setup_jq() {
   [[ "$output" == *"glab"* ]]
 }
 
-@test "args: --all requires exactly one project" {
+@test "args: --all requires a project or REVIEW_PROJECT env" {
   setup_jq
   make_stub glab   /dev/null
   make_stub claude /dev/null
 
+  unset REVIEW_PROJECT
   run "$PROJECT_ROOT/bin/review-mr.sh" --all
   [ "$status" -ne 0 ]
-  [[ "$output" == *"--all takes exactly one"* ]]
+  [[ "$output" == *"--all requires a <project> argument or REVIEW_PROJECT"* ]]
 }
 
-@test "args: single-MR mode requires <project> <iid>" {
+@test "args: single-MR mode requires <project> <iid> or REVIEW_PROJECT env" {
   setup_jq
   make_stub glab   /dev/null
   make_stub claude /dev/null
 
+  unset REVIEW_PROJECT
   run "$PROJECT_ROOT/bin/review-mr.sh" acme/widgets
   [ "$status" -ne 0 ]
   [[ "$output" == *"expected <project> <iid>"* ]]
+}
+
+@test "REVIEW_PROJECT used as default project in single-MR mode" {
+  setup_jq
+  local fx="$TMPDIR_T/fx"; mkdir -p "$fx"
+  cat >"$fx/view.json" <<'JSON'
+{"state":"opened","draft":false,"has_conflicts":false,"target_branch":"main","title":"x","description":"","head_pipeline":{"status":"success"}}
+JSON
+  echo "" >"$fx/diff.patch"
+  echo "[]" >"$fx/list.json"
+  make_glab_stub "$fx"
+  make_claude_stub '{"approved":true,"blocking":[],"suggestions":[],"summary":"ok"}'
+  export REVIEW_PROJECT="acme/widgets"
+
+  run "$PROJECT_ROOT/bin/review-mr.sh" 7
+  [ "$status" -eq 0 ]
+  grep -q '^glab mr view 7' "$CALL_LOG"
+  unset REVIEW_PROJECT
+}
+
+@test "REVIEW_PROJECT used as default project in --all mode" {
+  setup_jq
+  local fx="$TMPDIR_T/fx"; mkdir -p "$fx"
+  cat >"$fx/view.json" <<'JSON'
+{"state":"opened","draft":false,"has_conflicts":false,"target_branch":"main","title":"x","description":"","head_pipeline":{"status":"success"}}
+JSON
+  echo "" >"$fx/diff.patch"
+  cat >"$fx/list.json" <<'JSON'
+[{"iid": 5, "draft": false, "work_in_progress": false}]
+JSON
+  make_glab_stub "$fx"
+  make_claude_stub '{"approved":true,"blocking":[],"suggestions":[],"summary":"ok"}'
+  export REVIEW_PROJECT="acme/widgets"
+
+  run "$PROJECT_ROOT/bin/review-mr.sh" --all
+  [ "$status" -eq 0 ]
+  grep -q '^glab mr view 5' "$CALL_LOG"
+  unset REVIEW_PROJECT
 }
 
 # --- eligibility gates ----------------------------------------------------

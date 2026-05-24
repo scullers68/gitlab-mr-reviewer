@@ -5,11 +5,14 @@
 #
 # Usage:
 #   review-mr.sh [--dry-run] <project> <iid>
+#   review-mr.sh [--dry-run] <iid>            (uses REVIEW_PROJECT from env)
 #   review-mr.sh [--dry-run] --all <project>
+#   review-mr.sh [--dry-run] --all            (uses REVIEW_PROJECT from env)
 #
 # Env:
 #   GITLAB_TOKEN          required, PAT with `api` scope
 #   GITLAB_HOST           default: gitlab.com
+#   REVIEW_PROJECT        default project path (e.g. acme/widgets)
 #   REVIEW_TARGET_BRANCH  default: main
 #   CLAUDE_BIN            default: claude
 #   REVIEW_DEBUG=1        verbose debug logging
@@ -66,12 +69,25 @@ parse_args() {
   done
 
   if (( ALL_MODE )); then
-    [[ $# -eq 1 ]] || { log::error "--all takes exactly one <project> argument"; usage 2; }
-    PROJECT="$1"
+    if [[ $# -eq 1 ]]; then
+      PROJECT="$1"
+    elif [[ $# -eq 0 && -n "${REVIEW_PROJECT:-}" ]]; then
+      PROJECT="$REVIEW_PROJECT"
+    else
+      log::error "--all requires a <project> argument or REVIEW_PROJECT set in env"
+      usage 2
+    fi
   else
-    [[ $# -eq 2 ]] || { log::error "expected <project> <iid>"; usage 2; }
-    PROJECT="$1"
-    IID="$2"
+    if [[ $# -eq 2 ]]; then
+      PROJECT="$1"
+      IID="$2"
+    elif [[ $# -eq 1 && -n "${REVIEW_PROJECT:-}" ]]; then
+      PROJECT="$REVIEW_PROJECT"
+      IID="$1"
+    else
+      log::error "expected <project> <iid>, or set REVIEW_PROJECT in env and pass only <iid>"
+      usage 2
+    fi
   fi
 }
 
