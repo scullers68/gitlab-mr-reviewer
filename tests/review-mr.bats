@@ -374,10 +374,11 @@ EOF
   cat >"$fx/view.json" <<'JSON'
 {"state":"opened","draft":false,"has_conflicts":false,"target_branch":"main","title":"A & B","description":"use \\n","head_pipeline":{"status":"success"}}
 JSON
-  # Diff that contains & and backslash — both are awk gsub special chars.
+  # Diff that contains &, \, and \& — all are special in awk gsub replacements.
   cat >"$fx/diff.patch" <<'PATCH'
 -old && stuff
 +new \\ value & replacement
++perl regex \& literal backslash-ampersand
 PATCH
   echo "[]" >"$fx/list.json"
   make_glab_stub "$fx"
@@ -398,8 +399,11 @@ EOF
   [ "$status" -eq 0 ]
 
   # The rendered prompt must contain the literal strings, not awk-mangled expansions.
-  grep -q 'A & B'              "$TMPDIR_T/rendered_prompt"
-  grep -q 'use \\n'            "$TMPDIR_T/rendered_prompt"
-  grep -q '&& stuff'           "$TMPDIR_T/rendered_prompt"
-  grep -q '\\ value & replacement' "$TMPDIR_T/rendered_prompt"
+  grep -q 'A & B'                           "$TMPDIR_T/rendered_prompt"
+  grep -q 'use \\n'                         "$TMPDIR_T/rendered_prompt"
+  grep -q '&& stuff'                        "$TMPDIR_T/rendered_prompt"
+  grep -q '\\ value & replacement'          "$TMPDIR_T/rendered_prompt"
+  # \& is the critical two-char sequence: \ must be escaped before & so neither
+  # is consumed by awk gsub's replacement-string special-char processing.
+  grep -q 'perl regex \\& literal'          "$TMPDIR_T/rendered_prompt"
 }
