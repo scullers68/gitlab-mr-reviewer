@@ -46,7 +46,7 @@ Verify before invoking:
    ```
 3. The script emits one JSON line per MR on stdout, plus human-readable logs on
    stderr. Parse the JSON to report back:
-   - `action`: `merged`, `changes_requested`, `skipped`, `dry-run`, or `none`
+   - `action`: `merged`, `changes_requested`, `skipped`, `dry-run`, or `none` (`none` only occurs in `--all` mode when no open MRs exist)
    - `blocking_count`: number of blocking issues raised
    - `merged`: whether the MR was merged
    - `verdict.summary`: the one-paragraph verdict (when present)

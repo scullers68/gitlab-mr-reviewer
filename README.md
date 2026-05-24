@@ -79,6 +79,7 @@ All configuration is via environment variables (see `.env.example`):
 | `GITLAB_HOST` | `gitlab.com` | Host for self-hosted instances |
 | `REVIEW_TARGET_BRANCH` | `main` | Only MRs targeting this branch are eligible |
 | `CLAUDE_BIN` | `claude` | Override the Claude CLI binary path |
+| `REVIEW_DEBUG` | _unset_ | Set to `1` for verbose debug logging to stderr |
 
 ## Safety model
 
