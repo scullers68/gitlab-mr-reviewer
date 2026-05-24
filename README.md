@@ -30,7 +30,7 @@ the end, so it composes cleanly into CI and other automation.
 ## Install
 
 ```bash
-git clone <this-repo> ~/projects/gitlab-mr-reviewer
+git clone https://github.com/scullers68/gitlab-mr-reviewer ~/projects/gitlab-mr-reviewer
 cd ~/projects/gitlab-mr-reviewer
 cp .env.example .env
 # edit .env and set GITLAB_TOKEN
