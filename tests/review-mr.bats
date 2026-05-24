@@ -338,3 +338,31 @@ JSON
   [[ "$output" == *"verdict JSON failed validation"* ]]
   ! grep -q '^glab mr merge' "$CALL_LOG"
 }
+
+@test "review::invoke_claude is called without --output-format json" {
+  setup_jq
+  local fx="$TMPDIR_T/fx"; mkdir -p "$fx"
+  cat >"$fx/view.json" <<'JSON'
+{"state":"opened","draft":false,"has_conflicts":false,"target_branch":"main","title":"x","description":"","head_pipeline":{"status":"success"}}
+JSON
+  echo "diff" >"$fx/diff.patch"
+  echo "[]" >"$fx/list.json"
+  make_glab_stub "$fx"
+
+  # This stub records its own argv. If --output-format json is passed,
+  # the stub will record it. We assert it is NOT present.
+  cat >"$FAKE_BIN/claude" <<'EOF'
+#!/usr/bin/env bash
+echo "claude $*" >>"$CALL_LOG"
+cat >/dev/null
+cat <<VERDICT
+{"approved":true,"blocking":[],"suggestions":[],"summary":"ok"}
+VERDICT
+EOF
+  chmod +x "$FAKE_BIN/claude"
+
+  run "$PROJECT_ROOT/bin/review-mr.sh" acme/widgets 7
+  [ "$status" -eq 0 ]
+  # The call log must NOT contain --output-format json.
+  ! grep -q -- '--output-format json' "$CALL_LOG"
+}

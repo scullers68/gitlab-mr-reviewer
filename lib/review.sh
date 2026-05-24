@@ -29,7 +29,7 @@ review::invoke_claude() {
   "$claude_bin" \
     -p \
     --agent gitlab-mr-reviewer \
-    --output-format json \
+    --output-format text \
     --max-turns 1 \
     < "$prompt_path"
 }
