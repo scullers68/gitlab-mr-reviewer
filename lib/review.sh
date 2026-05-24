@@ -42,7 +42,6 @@ review::render_prompt() {
       print line
     }
   ' "$template"
-  rm -f "$t_file" "$d_file"
 }
 
 # Invoke Claude with the rendered prompt. Expects the CLI to return JSON.
