@@ -363,6 +363,7 @@ EOF
 
   run "$PROJECT_ROOT/bin/review-mr.sh" acme/widgets 7
   [ "$status" -eq 0 ]
-  # The call log must NOT contain --output-format json.
+  # Must use --output-format text, not the envelope-wrapping json variant.
   ! grep -q -- '--output-format json' "$CALL_LOG"
+  grep -q  -- '--output-format text' "$CALL_LOG"
 }
