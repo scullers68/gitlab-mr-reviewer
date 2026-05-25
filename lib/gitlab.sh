@@ -42,11 +42,17 @@ gitlab::mr_note() {
 # Merge an MR. Squashes, removes source branch on success.
 gitlab::mr_merge() {
   local project="$1" iid="$2"
-  glab mr merge "$iid" \
+  local output rc=0
+  output="$(glab mr merge "$iid" \
     --repo "$project" \
     --yes \
     --squash \
-    --remove-source-branch
+    --remove-source-branch 2>&1)" || rc=$?
+  printf '%s\n' "$output" >&2
+  # glab exits 0 even on API errors; detect failure via output text too
+  if [[ $rc -ne 0 ]] || printf '%s\n' "$output" | grep -qi 'error\|all attempts fail'; then
+    return 1
+  fi
 }
 
 # Extract a single field from the MR JSON blob on stdin.

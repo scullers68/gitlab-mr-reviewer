@@ -211,9 +211,13 @@ process_mr() {
     post_feedback "$project" "$iid" "$verdict"
     if [[ "$approved" == "true" && "$blocker_count" -eq 0 ]]; then
       log::info "merging MR !$iid"
-      gitlab::mr_merge "$project" "$iid"
-      action="merged"
-      merged=true
+      if gitlab::mr_merge "$project" "$iid"; then
+        action="merged"
+        merged=true
+      else
+        log::error "merge of MR !$iid failed — leaving open"
+        action="merge_failed"
+      fi
     else
       log::info "leaving MR !$iid open ($blocker_count blocking issue(s))"
       action="changes_requested"
